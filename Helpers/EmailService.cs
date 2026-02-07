@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Net.Mail;
+using System.Security; // Added for SecurityException
 
 namespace AceJobAgency.Helpers
 {
@@ -12,9 +13,20 @@ namespace AceJobAgency.Helpers
             _config = config;
         }
 
-        // New method to fix CS1061 error in AccountController
         public async Task SendResetPasswordLinkAsync(string userEmail, string link)
         {
+            // --- SECURITY FIX START ---
+            // 1. Define your allowed base URL (get this from appsettings.json in a real app)
+            var allowedDomain = "https://localhost:7002";
+
+            // 2. Validate the link starts with your trusted domain
+            if (string.IsNullOrEmpty(link) || !link.StartsWith(allowedDomain, StringComparison.OrdinalIgnoreCase))
+            {
+                // If the link is manipulated, we block the email and throw an error
+                throw new SecurityException("Potential malicious redirect detected in password reset link.");
+            }
+            // --- SECURITY FIX END ---
+
             string body = $"<h3>Password Reset Request</h3>" +
                           $"<p>Please click the link below to reset your password:</p>" +
                           $"<p><a href='{link}'>Reset Password Now</a></p>" +
@@ -32,12 +44,10 @@ namespace AceJobAgency.Helpers
             await SendEmailAsync(userEmail, "Your Ace Job Agency Security Code", body);
         }
 
-        // Private helper to centralize SMTP logic and fix null warnings (CS8604)
         private async Task SendEmailAsync(string recipientEmail, string subject, string body)
         {
             var emailSettings = _config.GetSection("EmailSettings");
 
-            // Fix CS8604: Provide defaults if config is missing
             string senderEmail = emailSettings["SenderEmail"] ?? "";
             string senderName = emailSettings["SenderName"] ?? "Ace Job Agency";
             string appPassword = emailSettings["AppPassword"] ?? "";
