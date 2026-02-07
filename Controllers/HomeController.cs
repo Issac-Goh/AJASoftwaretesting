@@ -11,48 +11,69 @@ namespace AceJobAgency.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+
         public HomeController(ApplicationDbContext context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;
         }
+
         public IActionResult Index()
         {
-            // For Error Demo
-            // throw new Exception("Demo Error");
-
             var memberId = HttpContext.Session.GetInt32("MemberId");
-            if (!memberId.HasValue)
-            {
-                return RedirectToAction("Login", "Account");
-            }
+            if (!memberId.HasValue) return RedirectToAction("Login", "Account");
 
             var member = _context.Members.Find(memberId.Value);
             if (member == null) return RedirectToAction("Logout", "Account");
 
-            // Fetch the previous successful login from AuditLogs
-            var lastLoginEntry = _context.AuditLogs
-                .Where(a => a.MemberId == memberId.Value && a.Action == "Login")
-                .OrderByDescending(a => a.CreatedAt)
-                .Skip(1) // Skip current login to show the previous one
-                .FirstOrDefault();
-
-            ViewBag.FullName = $"{member.FirstName} {member.LastName}";
-            ViewBag.Email = member.Email;
-            ViewBag.WhoAmI = member.WhoAmI;
-
-            // Format the date or provide a default message for first-time users
-            ViewBag.LastLogin = lastLoginEntry?.CreatedAt.ToString("f") ?? "This is your first login!";
-
-            // Inside Index action
+            // 1. Decrypt NRIC and generate masked version for the Model
             var key = _configuration["Encryption:Key"];
             var iv = _configuration["Encryption:IV"];
             string decryptedNric = EncryptionHelper.Decrypt(member.Nric, key, iv);
-
             member.GenerateMaskedNric(decryptedNric);
+
+            // 2. Map Profile Data to ViewBag
+            ViewBag.FullName = $"{member.FirstName} {member.LastName}";
+            ViewBag.Email = member.Email;
+            ViewBag.WhoAmI = member.WhoAmI;
+            ViewBag.Gender = member.Gender;
+            ViewBag.DateOfBirth = member.DateOfBirth.ToString("dd MMMM yyyy");
+
+            // 3. Handle Resume Metadata
+            ViewBag.HasResume = !string.IsNullOrEmpty(member.ResumePath);
+            ViewBag.ResumeFileName = ViewBag.HasResume ? Path.GetFileName(member.ResumePath) : null;
+
+            // 4. Fetch the previous successful login from AuditLogs
+            var lastLoginEntry = _context.AuditLogs
+                .Where(a => a.MemberId == memberId.Value && a.Action == "Login")
+                .OrderByDescending(a => a.CreatedAt)
+                .Skip(1)
+                .FirstOrDefault();
+
+            ViewBag.LastLogin = lastLoginEntry?.CreatedAt.ToString("f") ?? "This is your first login!";
 
             return View(member);
         }
+
+        [HttpGet]
+        public IActionResult DownloadResume()
+        {
+            var memberId = HttpContext.Session.GetInt32("MemberId");
+            if (!memberId.HasValue) return RedirectToAction("Login", "Account");
+
+            var member = _context.Members.Find(memberId.Value);
+            if (member == null || string.IsNullOrEmpty(member.ResumePath)) return NotFound();
+
+            // Security: Files are stored outside wwwroot
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", member.ResumePath);
+
+            if (!System.IO.File.Exists(filePath)) return NotFound();
+
+            var fileBytes = System.IO.File.ReadAllBytes(filePath);
+            return File(fileBytes, "application/pdf", $"Resume_{member.LastName}.pdf");
+        }
+
+        // --- Error & Admin Handlers ---
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
@@ -60,48 +81,18 @@ namespace AceJobAgency.Controllers
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
 
-        public IActionResult Error403()
-        {
-            return View();
-        }
-
-        public IActionResult Error404()
-        {
-            return View();
-        }
+        public IActionResult Error403() => View();
+        public IActionResult Error404() => View();
 
         [Route("Home/ErrorHandler/{code}")]
         public IActionResult ErrorHandler(int code)
         {
-            // Log the error code for internal auditing if needed
             return code switch
             {
                 404 => View("Error404"),
                 403 => View("Error403"),
-                _ => View("Error") // Generic error for 500 etc.
+                _ => View("Error")
             };
-        }
-
-        [HttpGet]
-        public IActionResult AdminOnlySettings()
-        {
-            // 1. Check if user is even logged in
-            var memberId = HttpContext.Session.GetInt32("MemberId");
-            if (!memberId.HasValue) return RedirectToAction("Login", "Account");
-
-            // 2. Simulate a Role check (e.g., checking if Email is the admin email)
-            // Replace with your actual admin email or a 'Role' session variable
-            var userEmail = HttpContext.Session.GetString("Email");
-            bool isAdmin = userEmail == "admin@acejobagency.com";
-
-            if (!isAdmin)
-            {
-                // This triggers the 403 status code
-                // Your middleware in Program.cs will catch this and show Error403.cshtml
-                return StatusCode(403);
-            }
-
-            return View();
         }
     }
 }

@@ -1,50 +1,105 @@
-﻿@{
+﻿@model AceJobAgency.Models.Member
+@{
     ViewData["Title"] = "Home";
 }
 
-<div class="row justify-content-center">
+<div class="row justify-content-center mt-4">
     <div class="col-md-10">
-        <div class="jumbotron bg-light p-5 rounded">
-            <h1 class="display-4">Welcome to Ace Job Agency!</h1>
-            <p class="lead">Hello, @ViewBag.FullName!</p>
+        <div class="jumbotron bg-light p-5 rounded shadow-sm border">
+            <h1 class="display-4 text-primary">Member Dashboard</h1>
+            <p class="lead">Welcome back, <strong>@ViewBag.FullName</strong></p>
             <hr class="my-4">
-            <p>You are successfully logged in to your member portal.</p>
-            <p><strong>Email:</strong> @ViewBag.Email</p>
 
-            <div class="form-group mb-3">
-                <label class="fw-bold">NRIC:</label>
-                <span class="badge bg-secondary">@Model.MaskedNric</span>
+            <div class="row">
+                <div class="col-md-6 border-end">
+                    <h5 class="text-secondary mb-3"><i class="bi bi-person-badge"></i> Personal Profile</h5>
+
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><strong>Email:</strong> @ViewBag.Email</li>
+                        <li class="mb-2"><strong>Gender:</strong> @ViewBag.Gender</li>
+                        <li class="mb-2"><strong>Date of Birth:</strong> @ViewBag.DateOfBirth</li>
+                        <li class="mb-2">
+                            <strong>NRIC:</strong>
+                            <span class="badge bg-dark">@Model.MaskedNric</span>
+                            <i class="bi bi-info-circle ms-1" title="Decrypted from AES-256 Storage"></i>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="col-md-6">
+                    <h5 class="text-secondary mb-3"><i class="bi bi-card-text"></i> About Me</h5>
+                    <div class="p-3 bg-white rounded border min-vh-10">
+                        <p class="text-muted" style="white-space: pre-wrap;">
+                            @(string.IsNullOrEmpty(ViewBag.WhoAmI) ? "No description provided." : ViewBag.WhoAmI)
+                        </p>
+                    </div>
+                </div>
             </div>
 
-            <div class="mt-4 p-3 border rounded bg-white">
-                <h5><i class="bi bi-person-lines-fill"></i> About Me</h5>
-                <p class="text-muted">@(string.IsNullOrEmpty(ViewBag.WhoAmI) ? "No description provided." : ViewBag.WhoAmI)</p>
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card border-primary bg-white">
+                        <div class="card-body d-flex align-items-center justify-content-between">
+                            <div>
+                                <h6 class="mb-1"><i class="bi bi-file-earmark-pdf"></i> Resume / CV</h6>
+                                @if (ViewBag.HasResume)
+                                {
+                                    <span class="text-success small"><i class="bi bi-check-circle"></i> @ViewBag.ResumeFileName</span>
+                                }
+                                else
+                                {
+                                    <span class="text-danger small"><i class="bi bi-x-circle"></i> No resume uploaded</span>
+                                }
+                            </div>
+                            <div>
+                                @if (ViewBag.HasResume)
+                                {
+                                    <a href="@Url.Action("DownloadResume", "Home")" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-download"></i> Download
+                                    </a>
+                                }
+                                <a href="@Url.Action("UploadResume", "Account")" class="btn btn-sm btn-outline-secondary">
+                                    Update
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="mt-4">
-                <h3>Quick Links</h3>
-                <div class="list-group">
-                    <a href="@Url.Action("ChangePassword", "Account")" class="list-group-item list-group-item-action">
+            <div class="mt-4 pt-3 border-top">
+                <h5>Account Actions</h5>
+                <div class="d-flex gap-2">
+                    <a href="@Url.Action("ChangePassword", "Account")" class="btn btn-outline-primary">
                         <i class="bi bi-key"></i> Change Password
                     </a>
-                    <a href="@Url.Action("Logout", "Account")" class="list-group-item list-group-item-action">
+                    <a href="@Url.Action("Logout", "Account")" class="btn btn-danger">
                         <i class="bi bi-box-arrow-right"></i> Logout
                     </a>
                 </div>
             </div>
         </div>
 
-        <div class="card mt-4">
-            <div class="card-header bg-info text-white">
-                <h4 class="mb-0">Security Information</h4>
+        <div class="card mt-4 border-info">
+            <div class="card-header bg-info text-white py-2">
+                <h6 class="mb-0"><i class="bi bi-shield-check"></i> Security & Compliance Notice</h6>
             </div>
-            <div class="card-body">
-                <ul>
-                    <li>Your session will expire after 20 minutes of inactivity</li>
-                    <li>Password must be changed every 90 days</li>
-                    <li>Your NRIC information is encrypted in our database</li>
-                    <li>All actions are logged for security purposes</li>
-                </ul>
+            <div class="card-body bg-light small">
+
+                <div class="row">
+                    <div class="col-sm-6">
+                        <ul class="mb-0">
+                            <li><strong>Data Protection:</strong> NRIC is encrypted with AES-256.</li>
+                            <li><strong>Session:</strong> Timeout set to 20 minutes.</li>
+                        </ul>
+                    </div>
+                    <div class="col-sm-6">
+                        <ul class="mb-0">
+                            <li><strong>Audit:</strong> All logins and downloads are logged.</li>
+                            <li><strong>Files:</strong> Resumes are stored in a non-public secure directory.</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

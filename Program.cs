@@ -19,7 +19,7 @@ builder.Services.AddScoped<SessionManager>();
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromMinutes(1);
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
@@ -106,6 +106,8 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.UseAuthorization();
+
 app.UseSession();
 
 // Session validation middleware
@@ -143,8 +145,6 @@ app.Use(async (context, next) =>
 
     await next();
 });
-
-app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",

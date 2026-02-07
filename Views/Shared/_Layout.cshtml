@@ -156,8 +156,8 @@
             let sessionWarningModal;
             let concurrentLoginModal;
             let lastActivityTime = Date.now();
-            const SESSION_TIMEOUT = 60 * 1000; // 1 minute
-            const WARNING_TIME = 30 * 1000;    // Show warning at 30 seconds remaining
+            const SESSION_TIMEOUT = 20 * 60 * 1000; // 1 minute
+            const WARNING_TIME = 60 * 1000;    // Show warning at 30 seconds remaining
 
             document.addEventListener('DOMContentLoaded', function() {
                 // Initialize modals
@@ -229,22 +229,6 @@
 
                 // Safety: ensure the timeout for the warning is recalculated
                 setWarningTimeout();
-            }
-
-            function extendSession() {
-                // This fetch call is crucial: it hits the server, which refreshes the
-                // ASP.NET Core Session sliding expiration.
-                fetch('@Url.Action("CheckSession", "Account")')
-                    .then(response => response.json())
-                    .then(data => {
-                        if (!data.isValid) {
-                            handleInvalidSession(data.reason);
-                        } else {
-                            // Sync local time with the successful server heartbeat
-                            lastActivityTime = Date.now();
-                        }
-                    })
-                    .catch(err => console.error("Session sync failed", err));
             }
             
             function showSessionWarning() {
