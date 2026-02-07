@@ -283,8 +283,11 @@ namespace AceJobAgency.Controllers
                 return View(model);
             }
 
-            // Check if email already exists
-            if (await _context.Members.AnyAsync(m => m.Email == model.Email))
+            // Normalize email to prevent duplicates caused by casing/whitespace
+            var normalizedEmail = (model.Email ?? string.Empty).Trim().ToLowerInvariant();
+
+            // Check if email already exists (normalized)
+            if (await _context.Members.AnyAsync(m => m.Email != null && m.Email.ToLower() == normalizedEmail))
             {
                 ModelState.AddModelError("Email", "Email already registered");
                 return View(model);
