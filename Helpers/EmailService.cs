@@ -18,7 +18,7 @@ namespace AceJobAgency.Helpers
 
         public async Task SendResetPasswordLinkAsync(string userEmail, string link)
         {
-            // Read allowed base URL from configuration (EmailSettings:AllowedBaseUrl)
+            // Read allowed base URL from configuration to avoid hardcoding             
             var allowedBaseUrl = _config["EmailSettings:AllowedBaseUrl"] ?? "https://localhost:7002";
 
             // Validate link: must be absolute HTTPS and under the configured base URL

@@ -4,6 +4,8 @@ using AceJobAgency.Data;
 using AceJobAgency.Models;
 using AceJobAgency.Helpers;
 using System.Text.Encodings.Web;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace AceJobAgency.Controllers
 {
