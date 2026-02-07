@@ -1,0 +1,28 @@
+﻿@model ErrorViewModel
+@{
+    ViewData["Title"] = "Error";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-8 text-center">
+        <div class="card border-danger shadow">
+            <div class="card-body py-5">
+                <h1 class="text-danger display-4">System Error</h1>
+                <p class="lead">We've encountered an unexpected issue while processing your request.</p>
+
+                @if (Model.ShowRequestId)
+                {
+                    <div class="alert alert-light border">
+                        <strong>Request ID:</strong> <code>@Model.RequestId</code>
+                        <small class="d-block text-muted">Please provide this ID when contacting support.</small>
+                    </div>
+                }
+
+                <div class="mt-4">
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-primary">Return to Login</a>
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary">Go Back</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

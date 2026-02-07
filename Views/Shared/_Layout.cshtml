@@ -1,0 +1,392 @@
+﻿@inject IConfiguration Configuration
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Ace Job Agency</title>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <script src="https://www.google.com/recaptcha/api.js?render=@Configuration["ReCaptcha:SiteKey"]"></script>
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">Ace Job Agency</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        @if (Context.Session.GetInt32("MemberId").HasValue)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Index", "Home")">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("ChangePassword", "Account")">Change Password</a>
+                            </li>
+                            <li class="nav-item">
+                                <span class="nav-link">Welcome, @Context.Session.GetString("FullName")</span>
+                            </li>
+                            <li class="nav-item">
+                                <span class="nav-link text-warning" id="sessionTimer"></span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Logout", "Account")">Logout</a>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Login", "Account")">Login</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="@Url.Action("Register", "Account")">Register</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container mt-4">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["ErrorMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (TempData["WarningMessage"] != null)
+        {
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                @TempData["WarningMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        @if (TempData["InfoMessage"] != null)
+        {
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                @TempData["InfoMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container text-center py-3">
+            &copy; 2024 - Ace Job Agency - Membership Service
+        </div>
+    </footer>
+
+    <!-- Session Timeout Warning Modal -->
+    <div class="modal fade" id="sessionWarningModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-warning">
+                    <h5 class="modal-title">⚠️ Session Expiring Soon</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Your session will expire in <strong id="warningCountdown">60</strong> seconds due to inactivity.</p>
+                    <p>Would you like to extend your session?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="logout()">Logout</button>
+                    <button type="button" class="btn btn-primary" onclick="extendSession()">Stay Logged In</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Concurrent Login Detection Modal -->
+    <div class="modal fade" id="concurrentLoginModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">🔒 Multiple Login Detected</h5>
+                </div>
+                <div class="modal-body">
+                    <p>You have been logged out because your account was accessed from another device or browser.</p>
+                    <p>If this wasn't you, please change your password immediately.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="window.location.href='@Url.Action("Login", "Account")'">Go to Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load jQuery FIRST from jsdelivr.net (already allowed in CSP) -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+
+    <!-- Load jQuery validation libraries SECOND -->
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js"></script>
+
+    <!-- Load Bootstrap THIRD -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Load custom scripts LAST -->
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @if (Context.Session.GetInt32("MemberId").HasValue)
+    {
+        <script>
+            // Session Management Script
+            let sessionCheckInterval;
+            let warningTimeout;
+            let warningCountdownInterval;
+            let sessionWarningModal;
+            let concurrentLoginModal;
+            let lastActivityTime = Date.now();
+            const SESSION_TIMEOUT = 60 * 1000; // 1 minute
+            const WARNING_TIME = 30 * 1000;    // Show warning at 30 seconds remaining
+
+            document.addEventListener('DOMContentLoaded', function() {
+                // Initialize modals
+                sessionWarningModal = new bootstrap.Modal(document.getElementById('sessionWarningModal'));
+                concurrentLoginModal = new bootstrap.Modal(document.getElementById('concurrentLoginModal'));
+
+                // Start session monitoring
+                startSessionMonitoring();
+
+                // Track user activity
+                document.addEventListener('mousemove', resetActivityTimer);
+                document.addEventListener('keypress', resetActivityTimer);
+                document.addEventListener('click', resetActivityTimer);
+                document.addEventListener('scroll', resetActivityTimer);
+            });
+
+                        function startSessionMonitoring() {
+                // Check status every 10 seconds so it's snappy for the demo
+                sessionCheckInterval = setInterval(checkSessionStatus, 10000);
+                setWarningTimeout();
+                updateSessionTimer();
+                setInterval(updateSessionTimer, 1000);
+            }
+
+            function checkSessionStatus() {
+                // CRITICAL: If the warning modal is already open, STOP pinging the server.
+                // This allows the session to actually expire.
+                if (document.getElementById('sessionWarningModal').classList.contains('show')) {
+                    return;
+                }
+
+                fetch('@Url.Action("CheckSession", "Account")')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.isValid) {
+                            handleInvalidSession(data.reason);
+                        }
+                    });
+            }
+
+            function setWarningTimeout() {
+                clearTimeout(warningTimeout);
+                // This calculates: (60s - 30s) = Show warning after 30s of inactivity
+                const timeUntilWarning = SESSION_TIMEOUT - WARNING_TIME;
+                warningTimeout = setTimeout(showSessionWarning, timeUntilWarning);
+            }
+            
+            function resetActivityTimer() {
+                // 1. Check if the warning modal is currently shown
+                const isWarningVisible = document.getElementById('sessionWarningModal').classList.contains('show');
+
+                // 2. If the warning is visible, STOP resetting the timer.
+                // This allows the session to actually die.
+                if (isWarningVisible) {
+                    return;
+                }
+
+                let now = Date.now();
+
+                // Only ping the server if at least 1 minute has passed (for production)
+                // or just reset the local activity time
+                if (now - lastActivityTime > 60000) {
+                    // Only call extend if not in demo mode or if you want to keep it snappy
+                    // For the 1-minute demo, you can even comment out extendSession() here
+                    extendSession();
+                }
+
+                lastActivityTime = now;
+
+                // Safety: ensure the timeout for the warning is recalculated
+                setWarningTimeout();
+            }
+
+            function extendSession() {
+                // This fetch call is crucial: it hits the server, which refreshes the
+                // ASP.NET Core Session sliding expiration.
+                fetch('@Url.Action("CheckSession", "Account")')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.isValid) {
+                            handleInvalidSession(data.reason);
+                        } else {
+                            // Sync local time with the successful server heartbeat
+                            lastActivityTime = Date.now();
+                        }
+                    })
+                    .catch(err => console.error("Session sync failed", err));
+            }
+            
+            function showSessionWarning() {
+                // Stop the modal from using a fake '60'
+                sessionWarningModal.show();
+
+                // Sync the modal countdown with the actual remaining time
+                warningCountdownInterval = setInterval(function() {
+                    const timeElapsed = Date.now() - lastActivityTime;
+                    const timeRemaining = SESSION_TIMEOUT - timeElapsed;
+                    const secondsLeft = Math.max(0, Math.floor(timeRemaining / 1000));
+
+                    document.getElementById('warningCountdown').textContent = secondsLeft;
+
+                    // If the real session time hits 0, log out immediately
+                    if (secondsLeft <= 0) {
+                        clearInterval(warningCountdownInterval);
+                        logout();
+                    }
+                }, 1000);
+            }
+
+            function extendSession() {
+                // Reset activity timer
+                resetActivityTimer();
+
+                // Hide warning modal
+                sessionWarningModal.hide();
+                clearInterval(warningCountdownInterval);
+
+                // Make a server request to extend session
+                fetch('@Url.Action("CheckSession", "Account")')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.isValid) {
+                            handleInvalidSession(data.reason);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Session check failed:', error);
+                    });
+            }
+
+            async function checkSessionStatus() {
+                try {
+                    const response = await fetch('@Url.Action("CheckSession", "Account")');
+                    const data = await response.json();
+
+                    if (!data.isValid) {
+                        handleInvalidSession(data.reason);
+                    }
+                } catch (error) {
+                    console.error('Session check failed:', error);
+                }
+            }
+
+            function handleInvalidSession(reason) {
+                clearInterval(sessionCheckInterval);
+                clearTimeout(warningTimeout);
+
+                if (reason === 'expired_or_concurrent') {
+                    // Show concurrent login modal
+                    concurrentLoginModal.show();
+                } else {
+                    // Redirect to login with timeout message
+                    window.location.href = '@Url.Action("Login", "Account")?expired=true';
+                }
+            }
+
+            function updateSessionTimer() {
+                const sessionTimerElement = document.getElementById('sessionTimer');
+                if (!sessionTimerElement) return;
+
+                const timeElapsed = Date.now() - lastActivityTime;
+                const timeRemaining = SESSION_TIMEOUT - timeElapsed;
+
+                if (timeRemaining <= 0) {
+                    sessionTimerElement.textContent = '⏱️ Expired';
+                    return;
+                }
+
+                const minutes = Math.floor(timeRemaining / 60000);
+                const seconds = Math.floor((timeRemaining % 60000) / 1000);
+
+                // Show timer in different colors based on time remaining
+                if (minutes < 2) {
+                    sessionTimerElement.className = 'nav-link text-danger fw-bold';
+                } else if (minutes < 5) {
+                    sessionTimerElement.className = 'nav-link text-warning fw-bold';
+                } else {
+                    sessionTimerElement.className = 'nav-link text-light';
+                }
+
+                sessionTimerElement.textContent = `⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            function logout() {
+                window.location.href = '@Url.Action("Logout", "Account")';
+            }
+
+            // Warn user before leaving page if session is active
+            window.addEventListener('beforeunload', function(e) {
+                // Only show warning if session has significant time remaining
+                const timeElapsed = Date.now() - lastActivityTime;
+                const timeRemaining = SESSION_TIMEOUT - timeElapsed;
+
+                if (timeRemaining > 60000) { // More than 1 minute remaining
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+        </script>
+    }
+
+    <script>
+    // Run this check every 20 seconds
+    const CHECK_INTERVAL = 20000; 
+
+    function performSessionCheck() {
+        // Only check if we are actually on a page that requires a session
+        // (Avoid checking on Login/Register pages)
+        const path = window.location.pathname.toLowerCase();
+        if (path.includes("/login") || path.includes("/register") || path.includes("/forgotpassword")) {
+            return;
+        }
+
+        fetch('/Account/CheckSessionStatus')
+            .then(response => response.json())
+            .then(data => {
+                if (data.valid === false) {
+                    // Alert the user and redirect to login
+                    alert("Your session has been terminated because you logged in from another device or your session expired.");
+                    window.location.href = "/Account/Login?expired=true";
+                }
+            })
+            .catch(error => console.error('Session check failed:', error));
+    }
+
+    // Start the heartbeat
+        setInterval(performSessionCheck, CHECK_INTERVAL);
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

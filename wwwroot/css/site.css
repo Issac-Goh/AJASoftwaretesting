@@ -1,0 +1,68 @@
+html {
+    font-size: 14px;
+}
+
+@media (min-width: 768px) {
+    html {
+        font-size: 16px;
+    }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+}
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensures body takes full screen height */
+    margin-bottom: 0; /* Remove the old margin */
+}
+
+.container {
+    flex: 1; /* This pushes the footer to the bottom by taking up all available space */
+}
+
+.footer {
+    position: relative; /* Change from absolute to relative */
+    width: 100%;
+    background-color: #007bff; /* Matches your screenshot */
+    color: white;
+    line-height: 60px;
+}
+
+.card {
+    border: none;
+    margin-bottom: 20px;
+}
+
+.card-header {
+    font-weight: bold;
+}
+
+.jumbotron {
+    background-color: #f8f9fa;
+    padding: 2rem;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+.text-danger {
+    font-size: 0.875rem;
+}
+
+.alert {
+    border-radius: 0.5rem;
+}

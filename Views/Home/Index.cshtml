@@ -1,0 +1,51 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Welcome to Ace Job Agency!</h1>
+            <p class="lead">Hello, @ViewBag.FullName!</p>
+            <hr class="my-4">
+            <p>You are successfully logged in to your member portal.</p>
+            <p><strong>Email:</strong> @ViewBag.Email</p>
+
+            <div class="form-group mb-3">
+                <label class="fw-bold">NRIC:</label>
+                <span class="badge bg-secondary">@Model.MaskedNric</span>
+            </div>
+
+            <div class="mt-4 p-3 border rounded bg-white">
+                <h5><i class="bi bi-person-lines-fill"></i> About Me</h5>
+                <p class="text-muted">@(string.IsNullOrEmpty(ViewBag.WhoAmI) ? "No description provided." : ViewBag.WhoAmI)</p>
+            </div>
+
+            <div class="mt-4">
+                <h3>Quick Links</h3>
+                <div class="list-group">
+                    <a href="@Url.Action("ChangePassword", "Account")" class="list-group-item list-group-item-action">
+                        <i class="bi bi-key"></i> Change Password
+                    </a>
+                    <a href="@Url.Action("Logout", "Account")" class="list-group-item list-group-item-action">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">Security Information</h4>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li>Your session will expire after 20 minutes of inactivity</li>
+                    <li>Password must be changed every 90 days</li>
+                    <li>Your NRIC information is encrypted in our database</li>
+                    <li>All actions are logged for security purposes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

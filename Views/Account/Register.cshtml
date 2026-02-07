@@ -1,0 +1,196 @@
+﻿@model RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+    @inject IConfiguration Configuration
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Member Registration</h2>
+            </div>
+            <div class="card-body">
+                <form asp-action="Register" method="post" enctype="multipart/form-data" id="registerForm">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="FirstName" class="form-label"></label>
+                            <input asp-for="FirstName" class="form-control" autocomplete="given-name" />
+                            <span asp-validation-for="FirstName" class="text-danger"></span>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="LastName" class="form-label"></label>
+                            <input asp-for="LastName" class="form-control" autocomplete="family-name" />
+                            <span asp-validation-for="LastName" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Gender" class="form-label"></label>
+                        <select asp-for="Gender" class="form-select" autocomplete="sex">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <span asp-validation-for="Gender" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Nric" class="form-label"></label>
+                        <input asp-for="Nric" class="form-control" placeholder="e.g., S1234567D" autocomplete="off" />
+                        <span asp-validation-for="Nric" class="text-danger"></span>
+                        <small class="form-text text-muted">Format: S1234567D</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" type="email" autocomplete="email" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" type="password" id="password" autocomplete="new-password" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                        <div id="passwordStrength" class="mt-2"></div>
+                        <small class="form-text text-muted">
+                            Password must be at least 12 characters with uppercase, lowercase, number, and special character (@@$!%*?&)
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="ConfirmPassword" class="form-label"></label>
+                        <input asp-for="ConfirmPassword" class="form-control" type="password" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="DateOfBirth" class="form-label"></label>
+                        <input asp-for="DateOfBirth" class="form-control" type="date" autocomplete="bday" />
+                        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Resume" class="form-label"></label>
+                        <input asp-for="Resume" class="form-control" type="file" accept=".pdf,.docx" />
+                        <span asp-validation-for="Resume" class="text-danger"></span>
+                        <small class="form-text text-muted">Allowed formats: .pdf, .docx (Max 5MB)</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="WhoAmI" class="form-label"></label>
+                        <textarea asp-for="WhoAmI" class="form-control" rows="4" maxlength="1000"></textarea>
+                        <span asp-validation-for="WhoAmI" class="text-danger"></span>
+                        <small class="form-text text-muted">Tell us about yourself (Max 1000 characters)</small>
+                    </div>
+                    
+                    <input type="hidden" asp-for="RecaptchaToken" id="recaptchaToken" />
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Register</button>
+                    </div>
+                    
+                    <div class="mt-3 text-center">
+                        Already have an account? <a asp-controller="Account" asp-action="Login">Login here</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Password strength checker
+        document.getElementById('password').addEventListener('input', function() {
+            const password = this.value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            
+            let strength = 0;
+            let feedback = [];
+            
+            if (password.length >= 12) strength++;
+            else feedback.push('At least 12 characters');
+            
+            if (/[a-z]/.test(password)) strength++;
+            else feedback.push('One lowercase letter');
+            
+            if (/[A-Z]/.test(password)) strength++;
+            else feedback.push('One uppercase letter');
+            
+            if (/\d/.test(password)) strength++;
+            else feedback.push('One number');
+            
+            if (/[@@$!%*?&]/.test(password)) strength++;
+            else feedback.push('One special character');
+            
+            if (strength === 5) {
+                strengthDiv.innerHTML = '<span class="badge bg-success">Strong Password!</span>';
+            } else if (strength >= 3) {
+                strengthDiv.innerHTML = '<span class="badge bg-warning">Medium - Missing: ' + feedback.join(', ') + '</span>';
+            } else {
+                strengthDiv.innerHTML = '<span class="badge bg-danger">Weak - Missing: ' + feedback.join(', ') + '</span>';
+            }
+        });
+
+        // Form submission with reCAPTCHA v3
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // 1. Check if the form is valid first!
+            if (!this.checkValidity()) {
+                // Triggers the browser's native validation UI
+                e.stopPropagation();
+                this.classList.add('was-validated');
+                return;
+        }
+
+        // 2. Execute reCAPTCHA only if form is valid
+        grecaptcha.ready(function() {
+            grecaptcha.execute('@Configuration["ReCaptcha:SiteKey"]', {action: 'register'})
+                    .then(function(token) {
+                    // Set the hidden input value
+                    document.getElementById('recaptchaToken').value = token;
+
+                    // Submit the form programmatically
+                    document.getElementById('registerForm').submit();
+                    });
+            });
+        });
+        
+        // Client-side validation for NRIC
+        document.querySelector('[name="Nric"]').addEventListener('blur', function() {
+            const nric = this.value.toUpperCase();
+            const nricPattern = /^[STFG]\d{7}[A-Z]$/;
+            
+            if (nric && !nricPattern.test(nric)) {
+                alert('Invalid NRIC format. Please use format: S1234567D');
+            }
+        });
+        
+        // File validation
+        document.querySelector('[name="Resume"]').addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const allowedExtensions = ['.pdf', '.docx'];
+                const fileName = file.name.toLowerCase();
+                const fileExtension = fileName.substring(fileName.lastIndexOf('.'));
+                
+                if (!allowedExtensions.includes(fileExtension)) {
+                    alert('Only .pdf and .docx files are allowed');
+                    this.value = '';
+                    return;
+                }
+                
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size cannot exceed 5MB');
+                    this.value = '';
+                }
+            }
+        });
+    </script>
+}
