@@ -64,13 +64,35 @@ namespace AceJobAgency.Controllers
             var member = _context.Members.Find(memberId.Value);
             if (member == null || string.IsNullOrEmpty(member.ResumePath)) return NotFound();
 
-            // Security: Files are stored outside wwwroot
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "Uploads", member.ResumePath);
+            // 1. Clean the DB path: Replace forward slashes with backslashes for Windows
+            // and remove the leading slash so Path.Combine doesn't break.
+            string dbPath = member.ResumePath.Replace("/", "\\").TrimStart('\\');
 
-            if (!System.IO.File.Exists(filePath)) return NotFound();
+            // 2. Combine with the Application Base Path
+            var filePath = Path.Combine(Directory.GetCurrentDirectory(), dbPath);
+
+            if (!System.IO.File.Exists(filePath))
+            {
+                // DEBUG: If it still fails, check if the folder is actually inside wwwroot
+                var alternativePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", dbPath);
+                if (System.IO.File.Exists(alternativePath))
+                {
+                    filePath = alternativePath;
+                }
+                else
+                {
+                    return NotFound($"File not found. System checked: {filePath}");
+                }
+            }
 
             var fileBytes = System.IO.File.ReadAllBytes(filePath);
-            return File(fileBytes, "application/pdf", $"Resume_{member.LastName}.pdf");
+
+            // 3. Serve as Inline PDF
+            // We clear the headers first to ensure no conflicting content-disposition exists
+            Response.Headers.Clear();
+            Response.Headers.Add("Content-Disposition", "inline; filename=\"Resume.pdf\"");
+
+            return File(fileBytes, "application/pdf");
         }
 
         // --- Error & Admin Handlers ---

@@ -54,8 +54,8 @@
                             <div>
                                 @if (ViewBag.HasResume)
                                 {
-                                    <a href="@Url.Action("DownloadResume", "Home")" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-download"></i> Download
+                                    <a href="@Url.Action("DownloadResume", "Home")" target="_blank" class="btn btn-sm btn-primary">
+                                        <i class="bi bi-eye"></i> View Resume
                                     </a>
                                 }
                                 <a href="@Url.Action("UploadResume", "Account")" class="btn btn-sm btn-outline-secondary">
